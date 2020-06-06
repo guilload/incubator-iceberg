@@ -42,6 +42,8 @@ public final class IcebergMRConfig {
         }
 
         public Configuration build() {
+            Table table = IcebergInputFormat.findTable(conf);
+            schema(table.schema());
             return conf;
         }
 
@@ -101,8 +103,7 @@ public final class IcebergMRConfig {
 
         public Builder readFrom(String path) {
             conf.set(TABLE_PATH, path);
-            Table table = IcebergInputFormat.findTable(conf);
-            return schema(table.schema());
+            return this;
         }
 
         public Builder schema(Schema schema) {
