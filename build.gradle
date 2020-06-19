@@ -298,6 +298,35 @@ project(':iceberg-hive') {
   }
 }
 
+project(':iceberg-hive-exec') {
+  dependencies {
+    compile project(':iceberg-core')
+    compile project(':iceberg-hive')
+    compile project(':iceberg-mr')
+
+    compileOnly("org.apache.hadoop:hadoop-client") {
+      exclude group: 'org.apache.avro', module: 'avro'
+      exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+    }
+
+    compileOnly("org.apache.hive:hive-exec") {
+      exclude group: 'org.apache.avro', module: 'avro'
+      exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+      exclude group: 'org.pentaho' // missing dependency
+      exclude group: 'org.apache.hive', module: 'hive-llap-tez'
+      exclude group: 'org.apache.logging.log4j'
+      exclude group: 'com.google.protobuf', module: 'protobuf-java'
+      exclude group: 'org.apache.calcite'
+      exclude group: 'org.apache.calcite.avatica'
+      exclude group: 'com.google.code.findbugs', module: 'jsr305'
+    }
+
+    testCompile project(path: ':iceberg-api', configuration: 'testArtifacts')
+    testCompile project(path: ':iceberg-core', configuration: 'testArtifacts')
+    testCompile project(path: ':iceberg-data', configuration: 'testArtifacts')
+  }
+}
+
 project(':iceberg-mr') {
   dependencies {
     compile project(':iceberg-api')

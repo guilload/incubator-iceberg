@@ -32,6 +32,7 @@ include 'arrow'
 include 'spark-runtime'
 include 'pig'
 include 'hive'
+include 'hive-exec'
 
 project(':api').name = 'iceberg-api'
 project(':common').name = 'iceberg-common'
@@ -47,4 +48,4 @@ project(':spark3').name = 'iceberg-spark3'
 project(':spark-runtime').name = 'iceberg-spark-runtime'
 project(':pig').name = 'iceberg-pig'
 project(':hive').name = 'iceberg-hive'
-
+project(':hive-exec').name = 'iceberg-hive-exec'
