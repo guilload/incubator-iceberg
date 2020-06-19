@@ -25,7 +25,6 @@ import org.apache.hadoop.hive.ql.io.CombineHiveInputFormat;
 import org.apache.iceberg.mr.mapred.Container;
 import org.apache.iceberg.mr.mapred.MapredIcebergInputFormat;
 
-// FIXME!
 public class IcebergInputFormat extends MapredIcebergInputFormat<Container<?>>
                                 implements CombineHiveInputFormat.AvoidSplitCombination {
 
