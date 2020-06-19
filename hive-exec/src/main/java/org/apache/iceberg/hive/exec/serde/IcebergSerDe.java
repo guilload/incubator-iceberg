@@ -49,7 +49,7 @@ public final class IcebergSerDe extends AbstractSerDe {
 
     if (conf != null) {
       IcebergMRConfig.setSchema(conf, schema);
-      IcebergMRConfig.setProjection(conf, schema);
+      IcebergMRConfig.setProjection(conf, projection);
     }
   }
 
