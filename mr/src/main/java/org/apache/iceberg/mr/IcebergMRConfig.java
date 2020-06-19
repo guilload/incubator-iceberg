@@ -224,6 +224,14 @@ public final class IcebergMRConfig {
     return conf.getBoolean(LOCALITY, false);
   }
 
+  public static void setSchema(Configuration conf, Schema schema) {
+    conf.set(TABLE_SCHEMA, SchemaParser.toJson(schema));
+  }
+
+  public static void setProjection(Configuration conf, Schema schema) {
+    conf.set(READ_SCHEMA, SchemaParser.toJson(schema));
+  }
+
   private static Schema parseSchemaFromJson(@Nullable String schema) {
     return Optional.ofNullable(schema)
             .map(SchemaParser::fromJson)
