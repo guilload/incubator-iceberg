@@ -71,11 +71,6 @@ public class IcebergInputFormat<T> extends InputFormat<Void, T> {
 
   @Override
   public List<InputSplit> getSplits(JobContext context) {
-    if (splits != null) {
-      LOG.info("Returning cached splits: {}", splits.size());
-      return splits;
-    }
-
     Configuration conf = context.getConfiguration();
     Table table = findTable(conf);
     TableScan scan = table.newScan()
@@ -142,25 +137,31 @@ public class IcebergInputFormat<T> extends InputFormat<Void, T> {
   }
 
   public static Table findTable(Configuration conf) {
+    final Table table;
+
     String path = IcebergMRConfig.readFrom(conf);
     Preconditions.checkArgument(path != null, "Table path should not be null");
     if (path.contains("/")) {
       HadoopTables tables = new HadoopTables(conf);
-      return tables.load(path);
-    }
+      table =  tables.load(path);
+    } else {
+      String catalogLoaderClass = IcebergMRConfig.catalogLoader(conf);
 
-    String catalogLoaderClass = IcebergMRConfig.catalogLoader(conf);
-    if (catalogLoaderClass != null) {
+      if (catalogLoaderClass == null) {
+        throw new IllegalArgumentException("No custom catalog specified to load table " + path);
+      }
+
       Function<Configuration, Catalog> catalogLoader = (Function<Configuration, Catalog>)
-          DynConstructors.builder(Function.class)
-                         .impl(catalogLoaderClass)
-                         .build()
-                         .newInstance();
+              DynConstructors.builder(Function.class)
+                      .impl(catalogLoaderClass)
+                      .build()
+                      .newInstance();
       Catalog catalog = catalogLoader.apply(conf);
       TableIdentifier tableIdentifier = TableIdentifier.parse(path);
-      return catalog.loadTable(tableIdentifier);
-    } else {
-      throw new IllegalArgumentException("No custom catalog specified to load table " + path);
+      table =  catalog.loadTable(tableIdentifier);
     }
+
+    IcebergMRConfig.setSchema(conf, table.schema());
+    return table;
   }
 }

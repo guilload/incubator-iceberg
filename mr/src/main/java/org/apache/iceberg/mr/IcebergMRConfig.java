@@ -91,6 +91,11 @@ public final class IcebergMRConfig {
       return this;
     }
 
+    public Builder catalogLoader(String loader) {
+      conf.set(CATALOG, loader);
+      return this;
+    }
+
     public Builder catalogLoader(Class<? extends Function<Configuration, Catalog>> loader) {
       conf.setClass(CATALOG, loader, Function.class);
       return this;
