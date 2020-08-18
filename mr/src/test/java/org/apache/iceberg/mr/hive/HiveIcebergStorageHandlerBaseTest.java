@@ -57,13 +57,15 @@ public abstract class HiveIcebergStorageHandlerBaseTest {
 
   private static final Schema CUSTOMER_SCHEMA = new Schema(
           required(1, "customer_id", Types.LongType.get()),
-          required(2, "first_name", Types.StringType.get())
+          required(2, "first_name", Types.StringType.get()),
+          required(3, "last_name", Types.StringType.get()),
+          required(4, "yob", Types.IntegerType.get())
   );
 
   private static final List<Record> CUSTOMER_RECORDS = TestHelper.RecordsBuilder.newInstance(CUSTOMER_SCHEMA)
-          .add(0L, "Alice")
-          .add(1L, "Bob")
-          .add(2L, "Trudy")
+          .add(0L, "Alice", "Cooper", 1948)
+          .add(1L, "Bob", "Dylan", 1941)
+          .add(2L, "Trudy", "Benson", 1985)
           .build();
 
   private static final Schema ORDER_SCHEMA = new Schema(
@@ -128,17 +130,29 @@ public abstract class HiveIcebergStorageHandlerBaseTest {
     List<Object[]> rows = shell.executeStatement("SELECT * FROM default.customers");
 
     Assert.assertEquals(3, rows.size());
-    Assert.assertArrayEquals(new Object[] {0L, "Alice"}, rows.get(0));
-    Assert.assertArrayEquals(new Object[] {1L, "Bob"}, rows.get(1));
-    Assert.assertArrayEquals(new Object[] {2L, "Trudy"}, rows.get(2));
+    Assert.assertArrayEquals(new Object[] {0L, "Alice", "Cooper", 1948}, rows.get(0));
+    Assert.assertArrayEquals(new Object[] {1L, "Bob", "Dylan", 1941}, rows.get(1));
+    Assert.assertArrayEquals(new Object[] {2L, "Trudy", "Benson", 1985}, rows.get(2));
 
     // Adding the ORDER BY clause will cause Hive to spawn a local MR job this time.
     List<Object[]> descRows = shell.executeStatement("SELECT * FROM default.customers ORDER BY customer_id DESC");
 
     Assert.assertEquals(3, descRows.size());
-    Assert.assertArrayEquals(new Object[] {2L, "Trudy"}, descRows.get(0));
-    Assert.assertArrayEquals(new Object[] {1L, "Bob"}, descRows.get(1));
-    Assert.assertArrayEquals(new Object[] {0L, "Alice"}, descRows.get(2));
+    Assert.assertArrayEquals(new Object[] {2L, "Trudy", "Benson", 1985}, descRows.get(0));
+    Assert.assertArrayEquals(new Object[] {1L, "Bob", "Dylan", 1941}, descRows.get(1));
+    Assert.assertArrayEquals(new Object[] {0L, "Alice", "Cooper", 1948}, descRows.get(2));
+  }
+
+  @Test
+  public void testScanTableWithProjection() throws IOException {
+    createTable("customers", CUSTOMER_SCHEMA, CUSTOMER_RECORDS);
+
+    List<Object[]> rows = shell.executeStatement("SELECT first_name, yob FROM default.customers ORDER BY yob");
+
+    Assert.assertEquals(3, rows.size());
+    Assert.assertArrayEquals(new Object[] {"Bob", 1941}, rows.get(0));
+    Assert.assertArrayEquals(new Object[] {"Alice", 1948}, rows.get(1));
+    Assert.assertArrayEquals(new Object[] {"Trudy", 1985}, rows.get(2));
   }
 
   @Test
