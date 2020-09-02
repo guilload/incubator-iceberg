@@ -19,6 +19,7 @@
 
 package org.apache.iceberg.mr.hive.serde.objectinspector;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -31,17 +32,23 @@ import org.apache.iceberg.data.Record;
 import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
 import org.apache.iceberg.relocated.com.google.common.collect.Lists;
 import org.apache.iceberg.types.Types;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class IcebergRecordObjectInspector extends StructObjectInspector {
+
+  private static final Logger LOG = LoggerFactory.getLogger(IcebergRecordObjectInspector.class);
 
   private static final IcebergRecordObjectInspector EMPTY =
           new IcebergRecordObjectInspector(Types.StructType.of(), Collections.emptyList());
 
-  private final List<IcebergRecordStructField> structFields;
+  private Types.StructType structType;
+  private List<IcebergRecordStructField> structFields;
 
   public IcebergRecordObjectInspector(Types.StructType structType, List<ObjectInspector> objectInspectors) {
     Preconditions.checkArgument(structType.fields().size() == objectInspectors.size());
 
+    this.structType = structType;
     this.structFields = Lists.newArrayListWithExpectedSize(structType.fields().size());
 
     int position = 0;
@@ -70,7 +77,8 @@ public final class IcebergRecordObjectInspector extends StructObjectInspector {
 
   @Override
   public Object getStructFieldData(Object o, StructField structField) {
-    return ((Record) o).get(((IcebergRecordStructField) structField).position());
+    Record record = (Record) o;
+    return record.getField(structField.getFieldID());
   }
 
   @Override
@@ -78,7 +86,7 @@ public final class IcebergRecordObjectInspector extends StructObjectInspector {
     Record record = (Record) o;
     return structFields
             .stream()
-            .map(f -> record.get(f.position()))
+            .map(f -> record.getField(f.getFieldID()))
             .collect(Collectors.toList());
   }
 
@@ -165,7 +173,6 @@ public final class IcebergRecordObjectInspector extends StructObjectInspector {
     public int hashCode() {
       return Objects.hash(field, oi, position);
     }
-
   }
 
 }

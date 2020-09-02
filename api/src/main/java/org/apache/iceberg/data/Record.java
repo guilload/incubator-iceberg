@@ -29,6 +29,8 @@ public interface Record extends StructLike {
 
   Object getField(String name);
 
+  Object getField(int id);
+
   void setField(String name, Object value);
 
   Object get(int pos);

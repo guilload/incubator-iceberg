@@ -43,6 +43,7 @@ public class InputFormatConfig {
   public static final String TABLE_IDENTIFIER = "iceberg.mr.table.identifier";
   public static final String TABLE_LOCATION = "iceberg.mr.table.location";
   public static final String TABLE_SCHEMA = "iceberg.mr.table.schema";
+  public static final String READ_COLUMNS = "iceberg.mr.table.schema.projection";
   public static final String LOCALITY = "iceberg.mr.locality";
   public static final String CATALOG = "iceberg.mr.catalog";
   public static final String HADOOP_CATALOG_WAREHOUSE_LOCATION = "iceberg.mr.catalog.hadoop.warehouse.location";
@@ -161,6 +162,24 @@ public class InputFormatConfig {
       conf.setBoolean(InputFormatConfig.SKIP_RESIDUAL_FILTERING, true);
       return this;
     }
+  }
+
+  public static String[] selectedColumns(Configuration conf) {
+    String[] readColumns = conf.getStrings(InputFormatConfig.READ_COLUMNS);
+    return readColumns != null && readColumns.length > 0 ? readColumns : null;
+  }
+
+  public static Schema readSchema(Configuration conf) {
+    return schema(conf, InputFormatConfig.READ_SCHEMA);
+  }
+
+  public static Schema tableSchema(Configuration conf) {
+    return schema(conf, InputFormatConfig.TABLE_SCHEMA);
+  }
+
+  private static Schema schema(Configuration conf, String key) {
+    String json = conf.get(key);
+    return json == null ? null : SchemaParser.fromJson(json);
   }
 
 }

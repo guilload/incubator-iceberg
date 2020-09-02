@@ -45,6 +45,18 @@ public class GenericRecord implements Record, StructLike {
         return idToPos;
       });
 
+  private static final LoadingCache<StructType, Map<Integer, Integer>> FIELD_ID_MAP_CACHE =
+          Caffeine.newBuilder()
+                  .weakKeys()
+                  .build(struct -> {
+                    Map<Integer, Integer> idToPos = Maps.newHashMap();
+                    List<Types.NestedField> fields = struct.fields();
+                    for (int i = 0; i < fields.size(); i += 1) {
+                      idToPos.put(fields.get(i).fieldId(), i);
+                    }
+                    return idToPos;
+                  });
+
   public static GenericRecord create(Schema schema) {
     return new GenericRecord(schema.asStruct());
   }
@@ -57,12 +69,14 @@ public class GenericRecord implements Record, StructLike {
   private final int size;
   private final Object[] values;
   private final Map<String, Integer> nameToPos;
+  private final Map<Integer, Integer> fieldIdToPos;
 
   private GenericRecord(StructType struct) {
     this.struct = struct;
     this.size = struct.fields().size();
     this.values = new Object[size];
     this.nameToPos = NAME_MAP_CACHE.get(struct);
+    this.fieldIdToPos = FIELD_ID_MAP_CACHE.get(struct);
   }
 
   private GenericRecord(GenericRecord toCopy) {
@@ -70,6 +84,7 @@ public class GenericRecord implements Record, StructLike {
     this.size = toCopy.size;
     this.values = Arrays.copyOf(toCopy.values, toCopy.values.length);
     this.nameToPos = toCopy.nameToPos;
+    this.fieldIdToPos = toCopy.fieldIdToPos;
   }
 
   private GenericRecord(GenericRecord toCopy, Map<String, Object> overwrite) {
@@ -77,6 +92,7 @@ public class GenericRecord implements Record, StructLike {
     this.size = toCopy.size;
     this.values = Arrays.copyOf(toCopy.values, toCopy.values.length);
     this.nameToPos = toCopy.nameToPos;
+    this.fieldIdToPos = toCopy.fieldIdToPos;
     for (Map.Entry<String, Object> entry : overwrite.entrySet()) {
       setField(entry.getKey(), entry.getValue());
     }
@@ -90,6 +106,16 @@ public class GenericRecord implements Record, StructLike {
   @Override
   public Object getField(String name) {
     Integer pos = nameToPos.get(name);
+    if (pos != null) {
+      return values[pos];
+    }
+
+    return null;
+  }
+
+  @Override
+  public Object getField(int id) {
+    Integer pos = fieldIdToPos.get(id);
     if (pos != null) {
       return values[pos];
     }
