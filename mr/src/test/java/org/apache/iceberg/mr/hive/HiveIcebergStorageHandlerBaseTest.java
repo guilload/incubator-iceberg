@@ -142,6 +142,27 @@ public abstract class HiveIcebergStorageHandlerBaseTest {
   }
 
   @Test
+  public void testProjectionPushDown() throws IOException {
+    createTable("customers", CUSTOMER_SCHEMA, CUSTOMER_RECORDS);
+
+    // Single fetch task: no MR job.
+    List<Object[]> rows = shell.executeStatement("SELECT first_name FROM default.customers");
+
+    Assert.assertEquals(3, rows.size());
+    Assert.assertArrayEquals(new Object[] {"Alice"}, rows.get(0));
+    Assert.assertArrayEquals(new Object[] {"Bob"}, rows.get(1));
+    Assert.assertArrayEquals(new Object[] {"Trudy"}, rows.get(2));
+
+    // Adding the ORDER BY clause will cause Hive to spawn a local MR job this time.
+    List<Object[]> descRows = shell.executeStatement("SELECT first_name FROM default.customers ORDER BY first_name DESC");
+
+    Assert.assertEquals(3, descRows.size());
+    Assert.assertArrayEquals(new Object[] {"Trudy"}, descRows.get(0));
+    Assert.assertArrayEquals(new Object[] {"Bob"}, descRows.get(1));
+    Assert.assertArrayEquals(new Object[] {"Alice"}, descRows.get(2));
+  }
+
+  @Test
   public void testJoinTables() throws IOException {
     createTable("customers", CUSTOMER_SCHEMA, CUSTOMER_RECORDS);
     createTable("orders", ORDER_SCHEMA, ORDER_RECORDS);

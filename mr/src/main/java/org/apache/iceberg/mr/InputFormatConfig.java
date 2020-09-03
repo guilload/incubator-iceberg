@@ -47,6 +47,7 @@ public class InputFormatConfig {
   public static final String CATALOG = "iceberg.mr.catalog";
   public static final String HADOOP_CATALOG_WAREHOUSE_LOCATION = "iceberg.mr.catalog.hadoop.warehouse.location";
   public static final String CATALOG_LOADER_CLASS = "iceberg.mr.catalog.loader.class";
+  public static final String SELECTED_COLUMNS = "iceberg.mr.selected.columns";
 
   public static final String CATALOG_NAME = "iceberg.catalog";
   public static final String HADOOP_CATALOG = "hadoop.catalog";
@@ -161,6 +162,24 @@ public class InputFormatConfig {
       conf.setBoolean(InputFormatConfig.SKIP_RESIDUAL_FILTERING, true);
       return this;
     }
+  }
+
+  public static Schema tableSchema(Configuration conf) {
+    return schema(conf, InputFormatConfig.TABLE_SCHEMA);
+  }
+
+  public static Schema readSchema(Configuration conf) {
+    return schema(conf, InputFormatConfig.READ_SCHEMA);
+  }
+
+  public static String[] selectedColumns(Configuration conf) {
+    String[] readColumns = conf.getStrings(InputFormatConfig.SELECTED_COLUMNS);
+    return readColumns != null && readColumns.length > 0 ? readColumns : null;
+  }
+
+  private static Schema schema(Configuration conf, String key) {
+    String json = conf.get(key);
+    return json == null ? null : SchemaParser.fromJson(json);
   }
 
 }
