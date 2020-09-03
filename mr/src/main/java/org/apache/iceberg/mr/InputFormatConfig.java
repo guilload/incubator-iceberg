@@ -37,17 +37,17 @@ public class InputFormatConfig {
   public static final String AS_OF_TIMESTAMP = "iceberg.mr.as.of.time";
   public static final String FILTER_EXPRESSION = "iceberg.mr.filter.expression";
   public static final String IN_MEMORY_DATA_MODEL = "iceberg.mr.in.memory.data.model";
-  public static final String READ_SCHEMA = "iceberg.mr.read.schema";
+  public static final String PROJECTED_SCHEMA = "iceberg.mr.projected.schema";
   public static final String SNAPSHOT_ID = "iceberg.mr.snapshot.id";
   public static final String SPLIT_SIZE = "iceberg.mr.split.size";
   public static final String TABLE_IDENTIFIER = "iceberg.mr.table.identifier";
   public static final String TABLE_LOCATION = "iceberg.mr.table.location";
   public static final String TABLE_SCHEMA = "iceberg.mr.table.schema";
-  public static final String READ_COLUMNS = "iceberg.mr.table.schema.projection";
   public static final String LOCALITY = "iceberg.mr.locality";
   public static final String CATALOG = "iceberg.mr.catalog";
   public static final String HADOOP_CATALOG_WAREHOUSE_LOCATION = "iceberg.mr.catalog.hadoop.warehouse.location";
   public static final String CATALOG_LOADER_CLASS = "iceberg.mr.catalog.loader.class";
+  public static final String SELECTED_COLUMNS = "iceberg.mr.selected.columns";
 
   public static final String CATALOG_NAME = "iceberg.catalog";
   public static final String HADOOP_CATALOG = "hadoop.catalog";
@@ -85,7 +85,7 @@ public class InputFormatConfig {
     }
 
     public ConfigBuilder project(Schema schema) {
-      conf.set(READ_SCHEMA, SchemaParser.toJson(schema));
+      conf.set(PROJECTED_SCHEMA, SchemaParser.toJson(schema));
       return this;
     }
 
@@ -165,16 +165,16 @@ public class InputFormatConfig {
   }
 
   public static String[] selectedColumns(Configuration conf) {
-    String[] readColumns = conf.getStrings(InputFormatConfig.READ_COLUMNS);
+    String[] readColumns = conf.getStrings(InputFormatConfig.SELECTED_COLUMNS);
     return readColumns != null && readColumns.length > 0 ? readColumns : null;
-  }
-
-  public static Schema readSchema(Configuration conf) {
-    return schema(conf, InputFormatConfig.READ_SCHEMA);
   }
 
   public static Schema tableSchema(Configuration conf) {
     return schema(conf, InputFormatConfig.TABLE_SCHEMA);
+  }
+
+  public static Schema projectedSchema(Configuration conf) {
+    return schema(conf, InputFormatConfig.PROJECTED_SCHEMA);
   }
 
   private static Schema schema(Configuration conf, String key) {

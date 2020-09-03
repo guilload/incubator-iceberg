@@ -49,11 +49,13 @@ public class HiveIcebergInputFormat extends MapredIcebergInputFormat<Record>
                                     implements CombineHiveInputFormat.AvoidSplitCombination {
 
   private static final Logger LOG = LoggerFactory.getLogger(HiveIcebergInputFormat.class);
+  private String[] selectedColumns;
 
   @Override
   public InputSplit[] getSplits(JobConf job, int numSplits) throws IOException {
     setFilter(job);
-    setSelectedColumns(job);
+    selectedColumns = ColumnProjectionUtils.getReadColumnNames(job);
+    job.setStrings(InputFormatConfig.SELECTED_COLUMNS, selectedColumns);
     String location = job.get(InputFormatConfig.TABLE_LOCATION);
     return Arrays.stream(super.getSplits(job, numSplits))
                  .map(split -> new HiveIcebergSplit((IcebergSplit) split, location))
@@ -62,7 +64,7 @@ public class HiveIcebergInputFormat extends MapredIcebergInputFormat<Record>
 
   @Override
   public RecordReader<Void, Container<Record>> getRecordReader(InputSplit split, JobConf job, Reporter reporter) throws IOException {
-    setSelectedColumns(job);
+    job.setStrings(InputFormatConfig.SELECTED_COLUMNS, selectedColumns);
     return super.getRecordReader(split, job, reporter);
   }
 
@@ -85,10 +87,6 @@ public class HiveIcebergInputFormat extends MapredIcebergInputFormat<Record>
         LOG.warn("Unable to create Iceberg filter, continuing without filter (will be applied by Hive later): ", e);
       }
     }
-  }
-
-  private static void setSelectedColumns(JobConf job) {
-    job.setStrings(InputFormatConfig.READ_COLUMNS, ColumnProjectionUtils.getReadColumnNames(job));
   }
 
 }

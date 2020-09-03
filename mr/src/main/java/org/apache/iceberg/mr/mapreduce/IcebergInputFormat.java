@@ -21,6 +21,7 @@ package org.apache.iceberg.mr.mapreduce;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -45,6 +46,7 @@ import org.apache.iceberg.Table;
 import org.apache.iceberg.TableProperties;
 import org.apache.iceberg.TableScan;
 import org.apache.iceberg.avro.Avro;
+import org.apache.iceberg.data.GenericRecord;
 import org.apache.iceberg.data.IdentityPartitionConverters;
 import org.apache.iceberg.data.avro.DataReader;
 import org.apache.iceberg.data.orc.GenericOrcReader;
@@ -112,7 +114,7 @@ public class IcebergInputFormat<T> extends InputFormat<Void, T> {
       scan.select(selectedColumns);
     }
 
-    Schema readSchema = InputFormatConfig.readSchema(conf);
+    Schema readSchema = InputFormatConfig.projectedSchema(conf);
     if (readSchema != null) {
       scan.project(readSchema);
     }
@@ -179,7 +181,7 @@ public class IcebergInputFormat<T> extends InputFormat<Void, T> {
       this.context = newContext;
       this.tasks = task.files().iterator();
       this.tableSchema = InputFormatConfig.tableSchema(conf);
-      this.readSchema = readSchema(conf, tableSchema);
+      this.readSchema = projectedSchema(conf, tableSchema);
       this.reuseContainers = conf.getBoolean(InputFormatConfig.REUSE_CONTAINERS, false);
       this.caseSensitive = conf.getBoolean(InputFormatConfig.CASE_SENSITIVE, true);
       this.inMemoryDataModel = conf.getEnum(InputFormatConfig.IN_MEMORY_DATA_MODEL,
@@ -187,15 +189,15 @@ public class IcebergInputFormat<T> extends InputFormat<Void, T> {
       this.currentIterator = open(tasks.next(), readSchema).iterator();
     }
 
-    private static Schema readSchema(Configuration conf, Schema tableSchema) {
-      Schema readSchema = InputFormatConfig.readSchema(conf);
+    private static Schema projectedSchema(Configuration conf, Schema tableSchema) {
+      Schema projectedSchema = InputFormatConfig.projectedSchema(conf);
 
-      if (readSchema != null) {
-        return readSchema;
+      if (projectedSchema != null) {
+        return projectedSchema;
       }
 
-      String[] readColumns = InputFormatConfig.selectedColumns(conf);
-      return readColumns != null ? tableSchema.select(readColumns) : tableSchema;
+      String[] selectedColumns = InputFormatConfig.selectedColumns(conf);
+      return selectedColumns != null ? tableSchema.select(selectedColumns) : tableSchema;
     }
 
     @Override
@@ -221,6 +223,9 @@ public class IcebergInputFormat<T> extends InputFormat<Void, T> {
 
     @Override
     public T getCurrentValue() {
+      if (true) {
+        throw new RuntimeException("" + ((GenericRecord) currentRow).size());
+      }
       return currentRow;
     }
 
